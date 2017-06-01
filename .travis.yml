@@ -1,7 +1,7 @@
 language: haskell
 sudo: required
 install:
-    - sudo install stack
+    - sudo apt-get install stack
     - stack install 7.10.3
 script:
     - stack test
