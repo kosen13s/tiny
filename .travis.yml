@@ -1,9 +1,12 @@
 language: haskell
-before_install:
-    - cabal install cabal-install
+sudo: required
+before_instal:
+    - sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 575159689BEFB442
+    - echo 'deb http://download.fpcomplete.com/ubuntu trusty main' | sudo tee /etc/apt/sources.list.d/fpco.list
 install:
-    - cabal install --only-dependencies --enable-tests
+    - sudo apt-get update && sudo apt-get install stack -y
+    - stack setup
 script:
-    - cabal configure --enable-tests && cabal build && cabal test
+    - stack build && stack test
 notifications:
     email: false
