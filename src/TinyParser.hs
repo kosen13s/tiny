@@ -1,6 +1,7 @@
 module TinyParser where
 
 import Data.Char
+import Control.Monad.State
 
 
 data ParseFailed =
@@ -8,7 +9,9 @@ data ParseFailed =
     ConditionUnsatisfied
     deriving (Show, Eq)
 
-type Parser = String -> Either ParseFailed (String, String)
+
+type Parser = StateT String (Either ParseFailed) String
+
 
 -- |
 -- a parser which parse an any char.
@@ -17,8 +20,9 @@ type Parser = String -> Either ParseFailed (String, String)
 -- Right ("\n","bc")
 --
 anyChar :: Parser
-anyChar (x:xs) = Right ([x], xs)
-anyChar _ = Left NotEnoughLength
+anyChar = StateT anyChar where
+    anyChar (x:xs) = Right ([x], xs)
+    anyChar xs = Left NotEnoughLength
 
 
 -- |
@@ -31,11 +35,11 @@ anyChar _ = Left NotEnoughLength
 -- Left ConditionUnsatisfied
 --
 satisfy :: (Char -> Bool) -> Parser
-satisfy pred (x:xs)
-  | pred x = Right ([x], xs)
-  | otherwise = Left ConditionUnsatisfied
-
-satisfy _ _ = Left NotEnoughLength
+satisfy pred = StateT satisfy where
+    satisfy (x:xs)
+      | pred x = Right ([x], xs)
+      | otherwise = Left ConditionUnsatisfied
+    satisfy _ = Left NotEnoughLength
 
 
 -- |
@@ -68,19 +72,19 @@ char c = satisfy (== c)
 -- |
 -- parse `1 + 1`.
 --
--- >>> parse1plus1 "abcd"
+-- >>> runStateT parse1plus1 "abcd"
 -- Left ConditionUnsatisfied
 --
--- >>> parse1plus1 "1+12"
+-- >>> runStateT parse1plus1 "1+12"
 -- Right ("1+1","2")
 --
--- >>> parse1plus1 "1+"
+-- >>> runStateT parse1plus1 "1+"
 -- Left NotEnoughLength
 --
 parse1plus1 :: Parser
-parse1plus1 str = do
-    (lhs, s1) <- char '1' str
-    (plus, s2) <- char '+' s1
-    (rhs, s3) <- char '1' s2
-    return (lhs ++ plus ++ rhs, s3)
+parse1plus1 = do
+    lhs <- char '1'
+    plus <- char '+'
+    rhs <- char '1'
+    return (lhs ++ plus ++ rhs)
 
