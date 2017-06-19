@@ -57,6 +57,21 @@ digit = satisfy isDigit
 
 
 -- |
+-- a parser which parse /[1-9]/.
+--
+-- >>> runStateT nonZeroDigit "0"
+-- Left ConditionUnsatisfied
+-- >>> runStateT nonZeroDigit "9"
+-- Right ("9","")
+-- >>> runStateT nonZeroDigit ":"
+-- Left ConditionUnsatisfied
+--
+nonZeroDigit :: Parser
+nonZeroDigit = satisfy isNonZeroDigit where
+    isNonZeroDigit c = (fromIntegral (ord c - ord '1') :: Word) <= 8
+
+
+-- |
 -- generate a parser which parse a specified char.
 --
 -- >>> let aParser = char 'a'
