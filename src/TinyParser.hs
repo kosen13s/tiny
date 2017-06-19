@@ -68,23 +68,3 @@ digit = satisfy isDigit
 char :: Char -> Parser
 char c = satisfy (== c)
 
-
--- |
--- parse `1 + 1`.
---
--- >>> runStateT parse1plus1 "abcd"
--- Left ConditionUnsatisfied
---
--- >>> runStateT parse1plus1 "1+12"
--- Right ("1+1","2")
---
--- >>> runStateT parse1plus1 "1+"
--- Left NotEnoughLength
---
-parse1plus1 :: Parser
-parse1plus1 = do
-    lhs <- char '1'
-    plus <- char '+'
-    rhs <- char '1'
-    return (lhs ++ plus ++ rhs)
-
