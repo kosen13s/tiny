@@ -20,3 +20,38 @@ naturalNumber = char '0' <|> do
     t <- closure digit
     return (h ++ t)
 
+
+-- |
+-- Parse /-?0|[1-9][0-9]*/.
+--
+integer :: Parser
+integer = optional (char '-') <.> naturalNumber
+
+
+-- |
+-- Parse integer and floating point numbers.
+-- TODO: Implement about floating point numbers.
+-- TBD: the kind of predefined numbers tiny uses.
+--
+number :: Parser
+number = integer
+
+
+-- |
+-- Parse expressions.
+-- NOTE: Now this function parses only four-arithmetical-operation.
+-- TBD: the kind of expressions.
+--
+expression :: Parser
+expression = number <.> binaryOperator <.> number
+
+
+-- |
+-- Parse binaryOperators.
+-- TBD: the kind of predefined operators.
+-- TBD: whether a programmer can define his or her own operators.
+--
+binaryOperator :: Parser
+binaryOperator = choice $ map string operators where
+    operators = ["+", "-", "*", "/"]
+
