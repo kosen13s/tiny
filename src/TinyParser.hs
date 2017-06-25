@@ -2,6 +2,7 @@ module TinyParser where
 
 import Data.Char
 import Control.Monad.State
+import Data.Either
 
 
 data ParseFailed =
@@ -82,4 +83,21 @@ nonZeroDigit = satisfy isNonZeroDigit where
 --
 char :: Char -> Parser
 char c = satisfy (== c)
+
+
+-- |
+-- express 0 or more times repeatation of the specified pattern.
+--
+-- >>> let p = closure digit
+-- >>> evalStateT p "13s"
+-- Right "13"
+-- >>> isLeft $ evalStateT p "kosen13s"
+-- True
+--
+closure :: Parser -> Parser
+closure p = StateT $ \s -> closure ("", s) where
+    closure (a, s) =
+        case runStateT p s of
+          Left _ -> Right (a, s)
+          Right (a', s') -> closure (a ++ a', s')
 
