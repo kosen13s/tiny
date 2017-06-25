@@ -16,6 +16,16 @@ type Parser = StateT String (Either ParseFailed) String
 
 
 -- |
+-- a parser which does nothing.
+--
+-- >>> runStateT epsilon "0"
+-- Right ("","0")
+--
+epsilon :: Parser
+epsilon = return ""
+
+
+-- |
 -- a parser which parse an any char.
 --
 -- >>> runStateT anyChar "\nbc"
@@ -129,6 +139,19 @@ closure p = StateT $ \s -> closure ("", s) where
         case runStateT p s of
           Left _ -> Right (a, s)
           Right (a', s') -> closure (a ++ a', s')
+
+
+-- |
+-- express 0 or 1 times appearance of the specified pattern.
+--
+-- >>> let p = optional digit
+-- >>> runStateT p  "0"
+-- Right ("0","")
+-- >>> runStateT p "a"
+-- Right ("","a")
+--
+optional :: Parser -> Parser
+optional p = p <|> epsilon
 
 
 -- |
