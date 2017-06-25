@@ -1,5 +1,7 @@
 module TinyParser where
 
+import Data.Char
+
 
 data ParseFailed =
     NotEnoughLength |
@@ -34,4 +36,31 @@ satisfy pred (x:xs)
   | otherwise = Left ConditionUnsatisfied
 
 satisfy _ _ = Left NotEnoughLength
+
+
+-- |
+-- a parser which parse /[0-9]/.
+--
+-- >>> runStateT digit "0"
+-- Right ("0","")
+-- >>> runStateT digit "/"
+-- Left ConditionUnsatisfied
+-- >>> runStateT digit ":"
+-- Left ConditionUnsatisfied
+--
+digit :: Parser
+digit = satisfy isDigit
+
+
+-- |
+-- generate a parser which parse a specified char.
+--
+-- >>> let aParser = char 'a'
+-- >>> runStateT aParser "a"
+-- Right ("a","")
+-- >>> runStateT aParser "A"
+-- Left ConditionUnsatisfied
+--
+char :: Char -> Parser
+char c = satisfy (== c)
 
