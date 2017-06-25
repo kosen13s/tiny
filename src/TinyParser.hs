@@ -97,6 +97,19 @@ char c = satisfy (== c)
 
 
 -- |
+-- generate a parser which parse a specified string.
+--
+-- >>> let abcdParser = string "abcd"
+-- >>> runStateT abcdParser "abcde"
+-- Right ("abcd","e")
+-- >>> runStateT abcdParser "abdc"
+-- Left ConditionUnsatisfied
+--
+string :: String -> Parser
+string = concatnate . map char
+
+
+-- |
 -- express any of specified parsers.
 --
 -- >>> let p = choice [digit, char 'a', string "ab"]
