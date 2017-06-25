@@ -68,7 +68,7 @@ digit = satisfy isDigit
 --
 nonZeroDigit :: Parser
 nonZeroDigit = satisfy isNonZeroDigit where
-    isNonZeroDigit c = (fromIntegral (ord c - ord '1') :: Word) <= 8
+    isNonZeroDigit c = isDigit c && c /= '0'
 
 
 -- |
