@@ -15,10 +15,7 @@ import Control.Monad.State
 -- Left (ParseFailed [ConditionUnsatisfied,ConditionUnsatisfied])
 --
 naturalNumber :: Parser
-naturalNumber = char '0' <|> do
-    h <- nonZeroDigit
-    t <- closure digit
-    return (h ++ t)
+naturalNumber = char '0' <|> nonZeroDigit <.> closure digit
 
 
 -- |
