@@ -87,6 +87,34 @@ char c = satisfy (== c)
 
 
 -- |
+-- express any of specified parsers.
+--
+-- >>> let p = choice [digit, char 'a', string "ab"]
+-- >>> evalStateT p "0a"
+-- Right "0"
+-- >>> evalStateT p "abc"
+-- Right "a"
+-- >>> isLeft $ runStateT p "b"
+-- True
+--
+choice :: [Parser] -> Parser
+choice = foldl1 (<|>)
+
+
+-- |
+-- express that patterns appear seaquentially.
+--
+-- >>> let p = concatnate [digit, char '+', digit]
+-- >>> evalStateT p "1+2i"
+-- Right "1+2"
+-- >>> isLeft $ evalStateT p "1+i"
+-- True
+--
+concatnate :: [Parser] -> Parser
+concatnate = foldl1 (<.>)
+
+
+-- |
 -- express 0 or more times repeatation of the specified pattern.
 --
 -- >>> let p = closure digit
