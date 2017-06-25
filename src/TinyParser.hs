@@ -8,3 +8,13 @@ data ParseFailed =
 
 type Parser = String -> Either ParseFailed (String, String)
 
+-- |
+-- a parser which parse an any char.
+--
+-- >>> runStateT anyChar "\nbc"
+-- Right ("\n","bc")
+--
+anyChar :: Parser
+anyChar (x:xs) = Right ([x], xs)
+anyChar _ = Left NotEnoughLength
+
