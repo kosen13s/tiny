@@ -147,11 +147,7 @@ concatnate = foldl1 (<.>)
 -- Right ""
 --
 closure :: Parser -> Parser
-closure p = StateT $ \s -> closure ("", s) where
-    closure (a, s) =
-        case runStateT p s of
-          Left _ -> Right (a, s)
-          Right (a', s') -> closure (a ++ a', s')
+closure p = p <.> closure p <|> epsilon
 
 
 -- |
