@@ -6,6 +6,7 @@ import Data.Either
 
 
 data ParseFailed =
+    ParseFailed [ParseFailed] |
     NotEnoughLength |
     ConditionUnsatisfied
     deriving (Show, Eq)
@@ -91,8 +92,8 @@ char c = satisfy (== c)
 -- >>> let p = closure digit
 -- >>> evalStateT p "13s"
 -- Right "13"
--- >>> isLeft $ evalStateT p "kosen13s"
--- True
+-- >>> evalStateT p "kosen13s"
+-- Right ""
 --
 closure :: Parser -> Parser
 closure p = StateT $ \s -> closure ("", s) where
@@ -100,4 +101,37 @@ closure p = StateT $ \s -> closure ("", s) where
         case runStateT p s of
           Left _ -> Right (a, s)
           Right (a', s') -> closure (a ++ a', s')
+
+
+-- |
+-- express the former or the latter.
+--
+-- >>> let p = char 'a' <|> closure (char 'a')
+-- >>> evalStateT p "aaa"
+-- Right "a"
+--
+(<|>) :: Parser -> Parser -> Parser
+(StateT a) <|> (StateT b) =
+    StateT $ \s -> a s <|> b s where
+        Left a <|> Left b = Left $ ParseFailed [a, b]
+        Left _ <|> b = b
+        a <|> _ = a
+
+
+-- |
+-- express the latter following the former.
+--
+-- >>> let p = char '-' <.> digit
+-- >>> evalStateT p "-12"
+-- Right "-1"
+--
+(<.>) :: Parser -> Parser -> Parser
+a <.> b = do
+    p1 <- a
+    p2 <- b
+    return (p1 ++ p2)
+
+
+infixl 6 <|>
+infixl 7 <.>
 
