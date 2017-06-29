@@ -1,7 +1,8 @@
 import Test.Hspec
 import TinyParser
-import TokenParser
+import LexicalParser
 import Control.Monad.State
+
 
 main :: IO ()
 main = hspec $ do
@@ -14,16 +15,24 @@ main = hspec $ do
             runStateT parse1plus1 "5+" `shouldBe` Left NotEnoughLength
 
     describe "four-arithmetical-operation" $ do
+        let parse = either (const []) (map mCategory) . evalStateT expression
         it "parses addition." $
-            evalStateT expression "-123+456" `shouldBe` Right "-123+456"
+            parse "-123+456"
+                `shouldBe` [UnaryOperator, Literal, BinaryOperator, Literal]
         it "parses subtraction." $
-            evalStateT expression "0--0" `shouldBe` Right "0--0"
+            parse "0---0"
+                `shouldBe` [Literal, BinaryOperator, UnaryOperator, UnaryOperator, Literal]
         it "parses multiplication." $
-            evalStateT expression "2*12345678901234567890" `shouldBe` Right "2*12345678901234567890"
+            parse "2*123456789012234567890"
+                `shouldBe` [Literal, BinaryOperator, Literal]
         it "parses division." $
-            evalStateT expression "0/-0" `shouldBe` Right "0/-0"
+            parse "0/-0"
+                `shouldBe` [Literal, BinaryOperator, UnaryOperator, Literal]
+        it "doesn't parse imcomplete binary operation." $
+            parse "+20*20" `shouldBe` []
 
-parse1plus1 :: Parser
+
+parse1plus1 :: BasicParser
 parse1plus1 = do
     lhs <- digit
     plus <- char '+'
