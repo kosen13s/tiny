@@ -1,6 +1,6 @@
 import Test.Hspec
 import TinyParser
-import TokenParser
+import LexicalParser
 import Control.Monad.State
 
 

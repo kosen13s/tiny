@@ -1,11 +1,11 @@
-module TokenParser where
+module LexicalParser where
 
 import TinyParser
 import Control.Monad.State hiding (fail)
 import Data.Either
 
 
-type TokenParser = Parser Token
+type LexicalParser = Parser Token
 
 
 data Token = Token
@@ -21,14 +21,14 @@ data Category =
 
 -- |
 -- generate a token parser which returns the single token with specified parameters.
--- You can use this function for binding `BasicParser` to `tokenParser`
+-- You can use this function for binding `BasicParser` to `LexicalParser`
 --
--- >>> let p = tokenParser Literal =<< digit
+-- >>> let p = lexicalParser Literal =<< digit
 -- >>> evalStateT p "3"
 -- Right [Token {mCategory = Literal, mValue = "3"}]
 --
-tokenParser :: Category -> String -> TokenParser
-tokenParser category value = return [Token category value]
+lexicalParser :: Category -> String -> LexicalParser
+lexicalParser category value = return [Token category value]
 
 
 -- |
@@ -41,8 +41,8 @@ tokenParser category value = return [Token category value]
 -- >>> isLeft $ runStateT naturalNumber "N0 number"
 -- True
 --
-naturalNumber :: TokenParser
-naturalNumber = tokenParser Literal =<< char '0' <|> nonZeroDigit <.> closure digit
+naturalNumber :: LexicalParser
+naturalNumber = lexicalParser Literal =<< char '0' <|> nonZeroDigit <.> closure digit
 
 
 -- |
@@ -54,7 +54,7 @@ naturalNumber = tokenParser Literal =<< char '0' <|> nonZeroDigit <.> closure di
 --      - function(block) literals
 --      and more.
 --
-literal :: TokenParser
+literal :: LexicalParser
 literal = naturalNumber
 
 
@@ -62,23 +62,23 @@ literal = naturalNumber
 -- parse an identifier
 -- TODO: implement this function.
 --
-identifier :: TokenParser
+identifier :: LexicalParser
 identifier = TinyParser.fail
 
 
-factor :: TokenParser
+factor :: LexicalParser
 factor = choice factors where
     factors = [literal, identifier]
 
 
-term :: TokenParser
+term :: LexicalParser
 term = closure prefixOperator <.> factor <.> closure postfixOperator
 
 
 -- |
 -- parse expressions.
 --
-expression :: TokenParser
+expression :: LexicalParser
 expression = term <.> optional (binaryOperator <.> expression)
 
 
@@ -86,8 +86,8 @@ expression = term <.> optional (binaryOperator <.> expression)
 -- parse binary operators.
 -- TODO: add other operators.
 --
-binaryOperator :: TokenParser
-binaryOperator = tokenParser BinaryOperator =<< choice operatorParsers where
+binaryOperator :: LexicalParser
+binaryOperator = lexicalParser BinaryOperator =<< choice operatorParsers where
     operatorParsers = map string ["+", "-", "*", "/"]
 
 
@@ -95,8 +95,8 @@ binaryOperator = tokenParser BinaryOperator =<< choice operatorParsers where
 -- parse prefix unary operators.
 -- TODO: add other operators.
 --
-prefixOperator :: TokenParser
-prefixOperator = tokenParser UnaryOperator =<< choice operatorParsers where
+prefixOperator :: LexicalParser
+prefixOperator = lexicalParser UnaryOperator =<< choice operatorParsers where
     operatorParsers = [string "-"]
 
 
@@ -105,6 +105,6 @@ prefixOperator = tokenParser UnaryOperator =<< choice operatorParsers where
 -- TODO: add operators.
 -- TBD: how parse non-simple operators such as call operator `(...)` and index operator `[...]`.
 --
-postfixOperator :: TokenParser
+postfixOperator :: LexicalParser
 postfixOperator = TinyParser.fail
 
