@@ -8,22 +8,33 @@ import Data.Either
 data ParseFailed =
     ParseFailed [ParseFailed] |
     NotEnoughLength |
-    ConditionUnsatisfied
+    ConditionUnsatisfied |
+    CalledFailParser
     deriving (Show, Eq)
 
 
-type Parser = StateT String (Either ParseFailed) String
+type Parser a = StateT String (Either ParseFailed) [a]
+type BasicParser = Parser Char
 
 
 -- |
 -- a parser which does nothing.
 --
 -- >>> runStateT epsilon "0"
--- Right ("","0")
+-- Right ([],"0")
 --
-epsilon :: Parser
-epsilon = return ""
+epsilon :: Parser a
+epsilon = return []
 
+
+-- |
+-- a parser which fails always.
+--
+-- >>> runStateT TinyParser.fail ""
+-- Left CalledFailParser
+--
+fail :: Parser a
+fail = StateT . const $ Left CalledFailParser
 
 -- |
 -- a parser which parse an any char.
@@ -31,7 +42,7 @@ epsilon = return ""
 -- >>> runStateT anyChar "\nbc"
 -- Right ("\n","bc")
 --
-anyChar :: Parser
+anyChar :: BasicParser
 anyChar = StateT anyChar where
     anyChar (x:xs) = Right ([x], xs)
     anyChar xs = Left NotEnoughLength
@@ -46,7 +57,7 @@ anyChar = StateT anyChar where
 -- >>> runStateT a2eParser "fg"
 -- Left ConditionUnsatisfied
 --
-satisfy :: (Char -> Bool) -> Parser
+satisfy :: (Char -> Bool) -> BasicParser
 satisfy pred = StateT satisfy where
     satisfy (x:xs)
       | pred x = Right ([x], xs)
@@ -64,7 +75,7 @@ satisfy pred = StateT satisfy where
 -- >>> runStateT digit ":"
 -- Left ConditionUnsatisfied
 --
-digit :: Parser
+digit :: BasicParser
 digit = satisfy isDigit
 
 
@@ -78,7 +89,7 @@ digit = satisfy isDigit
 -- >>> runStateT nonZeroDigit ":"
 -- Left ConditionUnsatisfied
 --
-nonZeroDigit :: Parser
+nonZeroDigit :: BasicParser
 nonZeroDigit = satisfy isNonZeroDigit where
     isNonZeroDigit c = isDigit c && c /= '0'
 
@@ -92,7 +103,7 @@ nonZeroDigit = satisfy isNonZeroDigit where
 -- >>> runStateT aParser "A"
 -- Left ConditionUnsatisfied
 --
-char :: Char -> Parser
+char :: Char -> BasicParser
 char c = satisfy (== c)
 
 
@@ -105,7 +116,7 @@ char c = satisfy (== c)
 -- >>> runStateT abcdParser "abdc"
 -- Left ConditionUnsatisfied
 --
-string :: String -> Parser
+string :: String -> BasicParser
 string = concatnate . map char
 
 
@@ -120,7 +131,7 @@ string = concatnate . map char
 -- >>> isLeft $ runStateT p "b"
 -- True
 --
-choice :: [Parser] -> Parser
+choice :: [Parser a] -> Parser a
 choice = foldl1 (<|>)
 
 
@@ -133,7 +144,7 @@ choice = foldl1 (<|>)
 -- >>> isLeft $ evalStateT p "1+i"
 -- True
 --
-concatnate :: [Parser] -> Parser
+concatnate :: [Parser a] -> Parser a
 concatnate = foldl1 (<.>)
 
 
@@ -146,7 +157,7 @@ concatnate = foldl1 (<.>)
 -- >>> evalStateT p "kosen13s"
 -- Right ""
 --
-closure :: Parser -> Parser
+closure :: Parser a -> Parser a
 closure p = p <.> closure p <|> epsilon
 
 
@@ -159,7 +170,7 @@ closure p = p <.> closure p <|> epsilon
 -- >>> runStateT p "a"
 -- Right ("","a")
 --
-optional :: Parser -> Parser
+optional :: Parser a -> Parser a
 optional p = p <|> epsilon
 
 
@@ -170,7 +181,7 @@ optional p = p <|> epsilon
 -- >>> evalStateT p "aaa"
 -- Right "a"
 --
-(<|>) :: Parser -> Parser -> Parser
+(<|>) :: Parser a -> Parser a -> Parser a
 (StateT a) <|> (StateT b) =
     StateT $ \s -> a s <|> b s where
         Left a <|> Left b = Left $ ParseFailed [a, b]
@@ -185,7 +196,7 @@ optional p = p <|> epsilon
 -- >>> evalStateT p "-12"
 -- Right "-1"
 --
-(<.>) :: Parser -> Parser -> Parser
+(<.>) :: Parser a -> Parser a -> Parser a
 a <.> b = do
     p1 <- a
     p2 <- b

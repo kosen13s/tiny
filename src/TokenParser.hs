@@ -1,54 +1,110 @@
 module TokenParser where
 
 import TinyParser
-import Control.Monad.State
+import Control.Monad.State hiding (fail)
+import Data.Either
+
+
+type TokenParser = Parser Token
+
+
+data Token = Token
+    { mCategory :: Category
+    , mValue :: String
+    } deriving Show
+
+
+data Category =
+    Literal | Identifier | Keyword | UnaryOperator | BinaryOperator
+        deriving (Eq, Show)
 
 
 -- |
--- Parse /0|[1-9][0-9]*/.
+-- generate a token parser which returns the single token with specified parameters.
+-- You can use this function for binding `BasicParser` to `tokenParser`
 --
--- >>> runStateT naturalNumber "0abc"
--- Right ("0","abc")
--- >>> runStateT naturalNumber "1024kib"
--- Right ("1024","kib")
--- >>> runStateT naturalNumber "N0 number"
--- Left (ParseFailed [ConditionUnsatisfied,ConditionUnsatisfied])
+-- >>> let p = tokenParser Literal =<< digit
+-- >>> evalStateT p "3"
+-- Right [Token {mCategory = Literal, mValue = "3"}]
 --
-naturalNumber :: Parser
-naturalNumber = char '0' <|> nonZeroDigit <.> closure digit
+tokenParser :: Category -> String -> TokenParser
+tokenParser category value = return [Token category value]
 
 
 -- |
--- Parse /-?0|[1-9][0-9]*/.
+-- parse /0|[1-9][0-9]*/.
 --
-integer :: Parser
-integer = optional (char '-') <.> naturalNumber
+-- >>> mValue . head <$> evalStateT naturalNumber "0.1"
+-- Right "0"
+-- >>> mValue . head <$> evalStateT naturalNumber "1024/65536"
+-- Right "1024"
+-- >>> isLeft $ runStateT naturalNumber "N0 number"
+-- True
+--
+naturalNumber :: TokenParser
+naturalNumber = tokenParser Literal =<< char '0' <|> nonZeroDigit <.> closure digit
 
 
 -- |
--- Parse integer and floating point numbers.
--- TODO: Implement about floating point numbers.
--- TBD: the kind of predefined numbers tiny uses.
+-- parse a literal.
+-- TODO: may include
+--      - string literals
+--      - array literals
+--      - dictionary literals
+--      - function(block) literals
+--      and more.
 --
-number :: Parser
-number = integer
+literal :: TokenParser
+literal = naturalNumber
 
 
 -- |
--- Parse expressions.
--- NOTE: Now this function parses only four-arithmetical-operation.
--- TBD: the kind of expressions.
+-- parse an identifier
+-- TODO: implement this function.
 --
-expression :: Parser
-expression = number <.> binaryOperator <.> number
+identifier :: TokenParser
+identifier = TinyParser.fail
+
+
+factor :: TokenParser
+factor = choice factors where
+    factors = [literal, identifier]
+
+
+term :: TokenParser
+term = closure prefixOperator <.> factor <.> closure postfixOperator
 
 
 -- |
--- Parse binaryOperators.
--- TBD: the kind of predefined operators.
--- TBD: whether a programmer can define his or her own operators.
+-- parse expressions.
 --
-binaryOperator :: Parser
-binaryOperator = choice $ map string operators where
-    operators = ["+", "-", "*", "/"]
+expression :: TokenParser
+expression = term <.> optional (binaryOperator <.> expression)
+
+
+-- |
+-- parse binary operators.
+-- TODO: add other operators.
+--
+binaryOperator :: TokenParser
+binaryOperator = tokenParser BinaryOperator =<< choice operatorParsers where
+    operatorParsers = map string ["+", "-", "*", "/"]
+
+
+-- |
+-- parse prefix unary operators.
+-- TODO: add other operators.
+--
+prefixOperator :: TokenParser
+prefixOperator = tokenParser UnaryOperator =<< choice operatorParsers where
+    operatorParsers = [string "-"]
+
+
+-- |
+-- parse postfix unary operators.
+-- TODO: add operators.
+-- TBD: how parse non-simple operators such as call operator `(...)` and index operator `[...]`.
+--
+postfixOperator :: TokenParser
+postfixOperator = TinyParser.fail
 
