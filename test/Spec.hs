@@ -1,6 +1,7 @@
 import Test.Hspec
 import TinyParser
 import LexicalParser
+import SyntaxTree
 import Control.Monad.State
 
 
@@ -30,6 +31,27 @@ main = hspec $ do
                 `shouldBe` [Literal, BinaryOperator, UnaryOperator, Literal]
         it "doesn't parse imcomplete binary operation." $
             parse "+20*20" `shouldBe` []
+
+    describe "construct syntax trees" $ do
+        let tree = either (const Empty) lexicalTree
+        it "construct a leaf." $
+            tree (Right [(Token Literal "12")])
+                `shouldBe` (Leaf "12")
+        it "construct an unary tree." $
+            tree (Right [(Token UnaryOperator "-"), (Token Literal "1")])
+                `shouldBe` (Unary "-" (Leaf "1"))
+        it "optimize an unary tree." $
+            tree (Right [(Token UnaryOperator "-"), (Token UnaryOperator "-"), (Token Literal "1")])
+                `shouldBe` (Leaf "1")
+        it "construct a binary tree." $
+            tree (Right [(Token Literal "12"), (Token BinaryOperator "+"), (Token Literal "3")])
+                `shouldBe` (Binary (Leaf "12") "+" (Leaf "3"))
+        it "construct a binary tree includes an unary tree." $
+            tree (Right [(Token Literal "12"), (Token BinaryOperator "+"), (Token UnaryOperator "-"), (Token Literal "3")])
+                `shouldBe` (Binary (Leaf "12") "+" (Unary "-" (Leaf "3")))
+        it "construct a binary tree includes a binary tree." $
+            tree (Right [(Token Literal "12"), (Token BinaryOperator "+"), (Token Literal "4"), (Token BinaryOperator "-"), (Token Literal "3")])
+                `shouldBe` (Binary (Binary (Leaf "12") "+" (Leaf "4")) "-" (Leaf "3"))
 
 
 parse1plus1 :: BasicParser
