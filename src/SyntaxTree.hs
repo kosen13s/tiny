@@ -36,5 +36,7 @@ modifyTree left ((Token BinaryOperator op):xs) = Binary left op (lexicalTree xs)
 -- Right (Binary (Unary "-" (Leaf "1")) "+" (Leaf "2"))
 -- >>> evalStateT p "1+-2"
 -- Right (Binary (Leaf "1") "+" (Unary "-" (Leaf "2")))
+-- >>> evalStateT p "--3"
+-- Right (Leaf "3")
 lexicalTree :: [Token] -> LexicalTree
 lexicalTree = modifyTree Empty
