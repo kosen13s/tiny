@@ -10,7 +10,7 @@ data Tree a =
     Leaf a |
     Unary a (Tree a) |
     Binary (Tree a) a (Tree a)
-        deriving Show
+        deriving (Eq, Show)
 
 
 type LexicalTree = Tree String
