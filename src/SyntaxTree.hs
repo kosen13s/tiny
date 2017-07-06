@@ -13,13 +13,13 @@ data Tree a =
         deriving (Eq, Show)
 
 
+type LexicalTree = Tree String
+
+
 type TreeState a = (Tree a -> Tree a, [Token])
 
 
 type LexicalTreeState = TreeState String
-
-
-type LexicalTree = Tree String
 
 
 leaf :: [Token] -> LexicalTreeState
