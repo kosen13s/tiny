@@ -11,7 +11,7 @@ type LexicalParser = Parser Token
 data Token = Token
     { mCategory :: Category
     , mValue :: String
-    } deriving Show
+    } deriving (Eq, Show)
 
 
 data Category =

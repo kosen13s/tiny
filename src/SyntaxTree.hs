@@ -27,9 +27,11 @@ leaf ((Token Literal v):xs) = (const (Leaf v), xs)
 
 
 unary :: [Token] -> LexicalTreeState
-unary ((Token UnaryOperator op):xs) = (const unaryTree, ys) where
-    (child, ys) = unary xs
-    unaryTree = Unary op (child Empty)
+unary (x@(Token UnaryOperator op):y:xs) = (const unaryTree, ys) where
+    isAnnihilated = x == y
+    (child, ys) = unary (if isAnnihilated then xs else y:xs)
+    childTree = child Empty
+    unaryTree = if isAnnihilated then childTree else Unary op childTree
 unary xs = leaf xs
 
 
