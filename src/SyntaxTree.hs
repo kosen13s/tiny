@@ -13,7 +13,28 @@ data Tree a =
         deriving (Eq, Show)
 
 
+type TreeState = (Tree String -> Tree String, [Token])
+
+
 type LexicalTree = Tree String
+
+
+leaf :: [Token] -> TreeState
+leaf ((Token Literal v):xs) = (const (Leaf v), xs)
+
+
+unary :: [Token] -> TreeState
+unary ((Token UnaryOperator op):xs) = (const unaryTree, ys) where
+    (child, ys) = unary xs
+    unaryTree = Unary op (child Empty)
+unary xs = leaf xs
+
+
+binary :: [Token] -> TreeState
+binary ((Token BinaryOperator op):xs) = (\left -> Binary left op rightTree, ys) where
+    (right, ys) = unary xs
+    rightTree = right Empty
+binary xs = unary xs
 
 
 -- |
@@ -22,9 +43,8 @@ type LexicalTree = Tree String
 -- Binary (Unary "-" (Leaf "2")) "+" (Leaf "1")
 modifyTree :: LexicalTree -> [Token] -> LexicalTree
 modifyTree tree [] = tree
-modifyTree _ ((Token Literal v):xs) = modifyTree (Leaf v) xs
-modifyTree _ ((Token UnaryOperator op):x:xs) = modifyTree (Unary op (lexicalTree [x])) xs
-modifyTree left ((Token BinaryOperator op):xs) = Binary left op (lexicalTree xs)
+modifyTree tree xs = modifyTree (next tree) ys where
+    (next, ys) = binary xs
 
 
 -- |
