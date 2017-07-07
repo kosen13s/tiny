@@ -52,6 +52,9 @@ main = hspec $ do
         it "construct a binary tree includes a binary tree." $
             tree (Right [(Token Literal "12"), (Token BinaryOperator "+"), (Token Literal "4"), (Token BinaryOperator "-"), (Token Literal "3")])
                 `shouldBe` (Binary (Binary (Leaf "12") "+" (Leaf "4")) "-" (Leaf "3"))
+        it "construct multiple and division preferentially." $
+            tree (Right [(Token Literal "10"), (Token BinaryOperator "-"), (Token Literal "2"), (Token BinaryOperator "*"), (Token Literal "5")])
+                `shouldBe` (Binary (Leaf "10") "-" (Binary (Leaf "2") "*" (Leaf "5")))
 
 
 parse1plus1 :: BasicParser

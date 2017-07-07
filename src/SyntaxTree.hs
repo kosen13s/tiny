@@ -22,6 +22,13 @@ type TreeState a = (Tree a -> Tree a, [Token])
 type LexicalTreeState = TreeState String
 
 
+priority :: String -> Int
+priority "+" = 1
+priority "-" = 1
+priority "*" = 2
+priority "/" = 2
+
+
 leaf :: [Token] -> LexicalTreeState
 leaf ((Token Literal v):xs) = (const (Leaf v), xs)
 
@@ -36,10 +43,17 @@ unary xs = leaf xs
 
 
 binary :: [Token] -> LexicalTreeState
-binary ((Token BinaryOperator op):xs) = (\left -> Binary left op rightTree, ys) where
+binary ((Token BinaryOperator op):xs) = (\left -> roll (Binary left op rightTree), ys) where
     (right, ys) = unary xs
     rightTree = right Empty
 binary xs = unary xs
+
+
+roll :: LexicalTree -> LexicalTree
+roll tree@(Binary (Binary lleft lop lright) pop pright)
+    | priority lop < priority pop = Binary lleft lop (Binary lright pop pright)
+    | otherwise = tree
+roll tree = tree
 
 
 -- |
