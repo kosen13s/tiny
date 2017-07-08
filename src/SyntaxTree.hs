@@ -36,17 +36,21 @@ leaf ((Token Literal v):xs) = (const (Leaf v), xs)
 unary :: [Token] -> LexicalTreeState
 unary (x@(Token UnaryOperator op):y:xs) = (const unaryTree, ys) where
     isAnnihilated = x == y
-    (child, ys) = unary (if isAnnihilated then xs else y:xs)
+    (child, ys) = construct (if isAnnihilated then xs else y:xs)
     childTree = child Empty
     unaryTree = if isAnnihilated then childTree else Unary op childTree
-unary xs = leaf xs
 
 
 binary :: [Token] -> LexicalTreeState
 binary ((Token BinaryOperator op):xs) = (\left -> roll (Binary left op rightTree), ys) where
-    (right, ys) = unary xs
+    (right, ys) = construct xs
     rightTree = right Empty
-binary xs = unary xs
+
+
+construct :: [Token] -> LexicalTreeState
+construct xs@((Token Literal _):_) = leaf xs
+construct xs@((Token UnaryOperator _):_) = unary xs
+construct xs@((Token BinaryOperator _):_) = binary xs
 
 
 roll :: LexicalTree -> LexicalTree
@@ -63,7 +67,7 @@ roll tree = tree
 modifyTree :: LexicalTree -> [Token] -> LexicalTree
 modifyTree tree [] = tree
 modifyTree tree xs = modifyTree (next tree) ys where
-    (next, ys) = binary xs
+    (next, ys) = construct xs
 
 
 -- |
