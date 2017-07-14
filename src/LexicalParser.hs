@@ -3,6 +3,7 @@ module LexicalParser where
 import TinyParser
 import Control.Monad.State hiding (fail)
 import Data.Either
+import Lib
 
 
 type LexicalParser = Parser Token
@@ -11,7 +12,8 @@ type LexicalParser = Parser Token
 data Token = Token
     { mCategory :: Category
     , mValue :: String
-    } deriving (Eq, Show)
+    } | Parenthesized [Token]
+        deriving (Eq, Show)
 
 
 data Category =
@@ -29,6 +31,17 @@ data Category =
 --
 lexicalParser :: Category -> String -> LexicalParser
 lexicalParser category value = return [Token category value]
+
+
+-- |
+-- parse a parenthesized expression and **returns inner of '(' and ')'**.
+--
+-- >>> let mValueInP = \(Parenthesized ts) -> map mValue ts
+-- >>> map mValueInP . fst . either undefined id $ runStateT expression "(1+1)"
+-- [["1","+","1"]]
+--
+parenthesized :: LexicalParser
+parenthesized = return . singletonList . Parenthesized =<< between (char '(') (char ')') expression
 
 
 -- |
@@ -55,7 +68,7 @@ naturalNumber = lexicalParser Literal =<< char '0' <|> nonZeroDigit <.> closure 
 --      and more.
 --
 literal :: LexicalParser
-literal = naturalNumber
+literal = naturalNumber <|> parenthesized
 
 
 -- |

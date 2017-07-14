@@ -120,6 +120,14 @@ string :: String -> BasicParser
 string = concatnate . map char
 
 
+between :: Parser a -> Parser a -> Parser b -> Parser b
+between begin end parser = do
+    begin
+    inner <- parser
+    end
+    return inner
+
+
 -- |
 -- express any of specified parsers.
 --
