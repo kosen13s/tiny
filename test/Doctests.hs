@@ -5,6 +5,7 @@ import Test.DocTest
 
 main :: IO ()
 main = doctest
-    [ "src/TinyParser.hs"
+    [ "src/Lib.hs"
+    , "src/TinyParser.hs"
     , "src/LexicalParser.hs"
     ]
