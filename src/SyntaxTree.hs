@@ -51,6 +51,7 @@ construct :: [Token] -> LexicalTreeState
 construct xs@((Token Literal _):_) = leaf xs
 construct xs@((Token UnaryOperator _):_) = unary xs
 construct xs@((Token BinaryOperator _):_) = binary xs
+construct ((Parenthesized xs):ys) = (const (Unary "()" (lexicalTree xs)), ys)
 
 
 roll :: LexicalTree -> LexicalTree

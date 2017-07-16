@@ -55,6 +55,9 @@ main = hspec $ do
         it "construct multiple and division preferentially." $
             tree (Right [(Token Literal "10"), (Token BinaryOperator "-"), (Token Literal "2"), (Token BinaryOperator "*"), (Token Literal "5")])
                 `shouldBe` (Binary (Leaf "10") "-" (Binary (Leaf "2") "*" (Leaf "5")))
+        it "construct parenthesized expressions preferentially." $
+            tree (Right [(Parenthesized [(Token Literal "1"), (Token BinaryOperator "-"), (Token Literal "2")]), (Token BinaryOperator "*"), (Token Literal "8")])
+                `shouldBe` (Binary (Unary "()" (Binary (Leaf "1") "-" (Leaf "2"))) "*" (Leaf "8"))
 
 
 parse1plus1 :: BasicParser
