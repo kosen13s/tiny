@@ -22,6 +22,9 @@ type TreeState a = (Tree a -> Tree a, [Token])
 type LexicalTreeState = TreeState String
 
 
+-- |
+-- returns given operator's priority
+--
 priority :: String -> Int
 priority "+" = 1
 priority "-" = 1
@@ -29,10 +32,16 @@ priority "*" = 2
 priority "/" = 2
 
 
+-- |
+-- generate a leaf with state from the head of a token array
+--
 leaf :: [Token] -> LexicalTreeState
 leaf ((Token Literal v):xs) = (const (Leaf v), xs)
 
 
+-- |
+-- generate an unary tree with state from a token array
+--
 unary :: [Token] -> LexicalTreeState
 unary (x@(Token UnaryOperator op):y:xs) = (const unaryTree, ys) where
     isAnnihilated = x == y
@@ -41,12 +50,18 @@ unary (x@(Token UnaryOperator op):y:xs) = (const unaryTree, ys) where
     unaryTree = if isAnnihilated then childTree else Unary op childTree
 
 
+-- |
+-- generate a binary tree with state from a token array
+--
 binary :: [Token] -> LexicalTreeState
 binary ((Token BinaryOperator op):xs) = (\left -> roll (Binary left op rightTree), ys) where
     (right, ys) = construct xs
     rightTree = right Empty
 
 
+-- |
+-- construct a syntax tree with state from a token array
+--
 construct :: [Token] -> LexicalTreeState
 construct xs@((Token Literal _):_) = leaf xs
 construct xs@((Token UnaryOperator _):_) = unary xs
@@ -54,6 +69,9 @@ construct xs@((Token BinaryOperator _):_) = binary xs
 construct ((Parenthesized xs):ys) = (const (Unary "()" (lexicalTree xs)), ys)
 
 
+-- |
+-- roll a binary tree in accordance with priorities of operators
+--
 roll :: LexicalTree -> LexicalTree
 roll tree@(Binary (Binary lleft lop lright) pop pright)
     | priority lop < priority pop = Binary lleft lop (Binary lright pop pright)
