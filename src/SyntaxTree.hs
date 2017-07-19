@@ -72,6 +72,9 @@ construct ((Parenthesized xs):ys) = (const (Unary "()" (lexicalTree xs)), ys)
 -- |
 -- roll a binary tree in accordance with priorities of operators
 --
+-- >>> roll (Binary (Binary (Leaf "3") "+" (Leaf "2")) "*" (Leaf "4"))
+-- Binary (Leaf "3") "+" (Binary (Leaf "2") "*" (Leaf "4"))
+--
 roll :: LexicalTree -> LexicalTree
 roll tree@(Binary (Binary lleft lop lright) pop pright)
     | priority lop < priority pop = Binary lleft lop (Binary lright pop pright)
@@ -93,6 +96,9 @@ modifyTree tree xs = modifyTree (next tree) ys where
 
 -- |
 -- generate a lexical tree from an array of tokens.
+--
+-- >>> lexicalTree [(Token Literal "18"), (Token BinaryOperator "*"), (Token Literal "4")]
+-- Binary (Leaf "18") "*" (Leaf "4")
 --
 lexicalTree :: [Token] -> LexicalTree
 lexicalTree = modifyTree Empty
