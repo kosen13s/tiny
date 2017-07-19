@@ -81,8 +81,10 @@ roll tree = tree
 
 -- |
 -- modify a lexical tree from an array of tokens.
+--
 -- >>> modifyTree (Unary "-" (Leaf "2")) [(Token BinaryOperator "+"), (Token Literal "1")]
 -- Binary (Unary "-" (Leaf "2")) "+" (Leaf "1")
+--
 modifyTree :: LexicalTree -> [Token] -> LexicalTree
 modifyTree tree [] = tree
 modifyTree tree xs = modifyTree (next tree) ys where
@@ -91,5 +93,6 @@ modifyTree tree xs = modifyTree (next tree) ys where
 
 -- |
 -- generate a lexical tree from an array of tokens.
+--
 lexicalTree :: [Token] -> LexicalTree
 lexicalTree = modifyTree Empty
