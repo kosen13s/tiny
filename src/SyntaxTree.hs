@@ -63,7 +63,7 @@ unary (x@(Token UnaryOperator op):y:xs) = (const unaryTree, ys) where
 --
 -- >>> let (f,_) = binary [Token BinaryOperator "+", Token UnaryOperator "-", Token Literal "1"]
 -- >>> f (Leaf "1")
--- Binary((Leaf "1") "+" (Unary "-" (Leaf "1")))
+-- Binary (Leaf "1") "+" (Unary "-" (Leaf "1"))
 --
 binary :: [Token] -> LexicalTreeState
 binary ((Token BinaryOperator op):xs) = (\left -> roll (Binary left op rightTree), ys) where
