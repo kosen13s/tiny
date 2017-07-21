@@ -35,12 +35,20 @@ priority "/" = 2
 -- |
 -- generate a leaf with state from the head of a token array
 --
+-- >>> let (f, _) = leaf [Token Literal "1"]
+-- >>> f Empty
+-- Leaf "1"
+--
 leaf :: [Token] -> LexicalTreeState
 leaf ((Token Literal v):xs) = (const (Leaf v), xs)
 
 
 -- |
 -- generate an unary tree with state from a token array
+--
+-- >>> let (f, _) = unary [Token UnaryOperator "-", Token Literal "1"]
+-- >>> f Empty
+-- Unary "-" (Leaf "1")
 --
 unary :: [Token] -> LexicalTreeState
 unary (x@(Token UnaryOperator op):y:xs) = (const unaryTree, ys) where
@@ -53,6 +61,10 @@ unary (x@(Token UnaryOperator op):y:xs) = (const unaryTree, ys) where
 -- |
 -- generate a binary tree with state from a token array
 --
+-- >>> let (f,_) = binary [Token BinaryOperator "+", Token UnaryOperator "-", Token Literal "1"]
+-- >>> f (Leaf "1")
+-- Binary((Leaf "1") "+" (Unary "-" (Leaf "1")))
+--
 binary :: [Token] -> LexicalTreeState
 binary ((Token BinaryOperator op):xs) = (\left -> roll (Binary left op rightTree), ys) where
     (right, ys) = construct xs
@@ -61,6 +73,10 @@ binary ((Token BinaryOperator op):xs) = (\left -> roll (Binary left op rightTree
 
 -- |
 -- construct a syntax tree with state from a token array
+--
+-- >>> let (f, _) = construct [Parenthesized [Token Literal "1"]]
+-- >>> f Empty
+-- Unary "()" (Leaf "1")
 --
 construct :: [Token] -> LexicalTreeState
 construct xs@((Token Literal _):_) = leaf xs
