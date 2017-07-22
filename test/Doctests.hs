@@ -8,4 +8,5 @@ main = doctest
     [ "src/Lib.hs"
     , "src/TinyParser.hs"
     , "src/LexicalParser.hs"
+    , "src/SyntaxTree.hs"
     ]
