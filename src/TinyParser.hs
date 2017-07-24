@@ -2,8 +2,11 @@ module TinyParser where
 
 import Data.Char
 import Control.Monad.State
-import Data.Either
 
+-- $setup
+-- >>> import Test.QuickCheck
+-- >>> import Data.Either
+-- >>> let parseOK = liftM isRight . runStateT
 
 data ParseFailed =
     ParseFailed [ParseFailed] |
@@ -35,6 +38,7 @@ epsilon = return []
 --
 fail :: Parser a
 fail = StateT . const $ Left CalledFailParser
+
 
 -- |
 -- a parser which parse an any char.
@@ -120,12 +124,26 @@ string :: String -> BasicParser
 string = concatnate . map char
 
 
+-- |
+-- generate a parser which parse a string between strings `begin` and `end` parsers parse.
+-- Implemented as a concatnation of `begin`, `inner`, and `end` in this order,
+-- so depending on `inner`, the result might not be expected one.
+-- e.g.) `badString` defined below that intend to parse double-quated string fails to parse
+-- because `(closure anyChar)` eats up all non-parsed string.
+--
+-- >>> let parenedDigits = between (char '(') (char ')') (closure digit)
+-- >>> evalStateT parenedDigits "(0013)"
+-- Right "0013"
+-- >>> let badString = between (char '"') (char '"') (closure anyChar)
+-- >>> parseOK badString "\"Hello!\""
+-- False
+--
 between :: Parser a -> Parser a -> Parser b -> Parser b
-between begin end parser = do
+between begin end inner = do
     begin
-    inner <- parser
+    _inner <- inner
     end
-    return inner
+    return _inner
 
 
 -- |
@@ -136,8 +154,8 @@ between begin end parser = do
 -- Right "0"
 -- >>> evalStateT p "abc"
 -- Right "a"
--- >>> isLeft $ runStateT p "b"
--- True
+-- >>> parseOK p "b"
+-- False
 --
 choice :: [Parser a] -> Parser a
 choice = foldl1 (<|>)
@@ -149,8 +167,8 @@ choice = foldl1 (<|>)
 -- >>> let p = concatnate [digit, char '+', digit]
 -- >>> evalStateT p "1+2i"
 -- Right "1+2"
--- >>> isLeft $ evalStateT p "1+i"
--- True
+-- >>> parseOK p "1+i"
+-- False
 --
 concatnate :: [Parser a] -> Parser a
 concatnate = foldl1 (<.>)
