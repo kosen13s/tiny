@@ -2,8 +2,12 @@ module LexicalParser where
 
 import TinyParser
 import Control.Monad.State hiding (fail)
-import Data.Either
 import Lib
+
+-- $setup
+-- >>> import Test.QuickCheck
+-- >>> import Data.Either
+-- >>> let parseOK = liftM isRight . runStateT
 
 
 type LexicalParser = Parser Token
@@ -51,8 +55,8 @@ parenthesized = return . singletonList . Parenthesized =<< between (char '(') (c
 -- Right "0"
 -- >>> mValue . head <$> evalStateT naturalNumber "1024/65536"
 -- Right "1024"
--- >>> isLeft $ runStateT naturalNumber "N0 number"
--- True
+-- >>> parseOK naturalNumber "N0 number"
+-- False
 --
 naturalNumber :: LexicalParser
 naturalNumber = lexicalParser Literal =<< char '0' <|> nonZeroDigit <.> closure digit
@@ -67,6 +71,15 @@ naturalNumber = lexicalParser Literal =<< char '0' <|> nonZeroDigit <.> closure 
 --      - function(block) literals
 --      and more.
 --
+-- >>> parseOK literal "0"
+-- True
+-- >>> parseOK literal "-1"
+-- False
+-- >>> parseOK literal "(1+2*3)"
+-- True
+-- >>> parseOK literal "\"\""
+-- False
+--
 literal :: LexicalParser
 literal = naturalNumber <|> parenthesized
 
@@ -79,17 +92,35 @@ identifier :: LexicalParser
 identifier = TinyParser.fail
 
 
+-- |
+-- parse a token which can become a element of SyntaxTree/`Leaf`.
+--
+-- prop> liftM2 (==) (parseOK factor) (parseOK literal)
+--
 factor :: LexicalParser
 factor = choice factors where
     factors = [literal, identifier]
 
 
+-- |
+-- parse a couple of unary operators and a `factor` associated with it.
+--
+-- >>> parseOK term "----------1"
+-- True
+-- >>> parseOK term "0"
+-- True
+--
 term :: LexicalParser
 term = closure prefixOperator <.> factor <.> closure postfixOperator
 
 
 -- |
 -- parse expressions.
+--
+-- >>> parseOK expression "1*(2+3)"
+-- True
+-- >>> parseOK expression "0"
+-- True
 --
 expression :: LexicalParser
 expression = term <.> optional (binaryOperator <.> expression)
@@ -99,6 +130,9 @@ expression = term <.> optional (binaryOperator <.> expression)
 -- parse binary operators.
 -- TODO: add other operators.
 --
+-- >>> evalStateT binaryOperator "-"
+-- Right [Token {mCategory = BinaryOperator, mValue = "-"}]
+--
 binaryOperator :: LexicalParser
 binaryOperator = lexicalParser BinaryOperator =<< choice operatorParsers where
     operatorParsers = map string ["+", "-", "*", "/"]
@@ -107,6 +141,9 @@ binaryOperator = lexicalParser BinaryOperator =<< choice operatorParsers where
 -- |
 -- parse prefix unary operators.
 -- TODO: add other operators.
+--
+-- >>> evalStateT prefixOperator "-"
+-- Right [Token {mCategory = UnaryOperator, mValue = "-"}]
 --
 prefixOperator :: LexicalParser
 prefixOperator = lexicalParser UnaryOperator =<< choice operatorParsers where
