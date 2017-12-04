@@ -36,28 +36,28 @@ main = hspec $ do
         let tree = either (const Empty) lexicalTree
         it "construct a leaf." $
             tree (Right [(Token Literal "12")])
-                `shouldBe` (Leaf "12")
+                `shouldBe` (LiteralLeaf "12")
         it "construct an unary tree." $
             tree (Right [(Token UnaryOperator "-"), (Token Literal "1")])
-                `shouldBe` (Unary "-" (Leaf "1"))
+                `shouldBe` (Unary "-" (LiteralLeaf "1"))
         it "optimize an unary tree." $
             tree (Right [(Token UnaryOperator "-"), (Token UnaryOperator "-"), (Token Literal "1")])
-                `shouldBe` (Leaf "1")
+                `shouldBe` (LiteralLeaf "1")
         it "construct a binary tree." $
             tree (Right [(Token Literal "12"), (Token BinaryOperator "+"), (Token Literal "3")])
-                `shouldBe` (Binary (Leaf "12") "+" (Leaf "3"))
+                `shouldBe` (Binary (LiteralLeaf "12") "+" (LiteralLeaf "3"))
         it "construct a binary tree includes an unary tree." $
             tree (Right [(Token Literal "12"), (Token BinaryOperator "+"), (Token UnaryOperator "-"), (Token Literal "3")])
-                `shouldBe` (Binary (Leaf "12") "+" (Unary "-" (Leaf "3")))
+                `shouldBe` (Binary (LiteralLeaf "12") "+" (Unary "-" (LiteralLeaf "3")))
         it "construct a binary tree includes a binary tree." $
             tree (Right [(Token Literal "12"), (Token BinaryOperator "+"), (Token Literal "4"), (Token BinaryOperator "-"), (Token Literal "3")])
-                `shouldBe` (Binary (Binary (Leaf "12") "+" (Leaf "4")) "-" (Leaf "3"))
+                `shouldBe` (Binary (Binary (LiteralLeaf "12") "+" (LiteralLeaf "4")) "-" (LiteralLeaf "3"))
         it "construct multiple and division preferentially." $
             tree (Right [(Token Literal "10"), (Token BinaryOperator "-"), (Token Literal "2"), (Token BinaryOperator "*"), (Token Literal "5")])
-                `shouldBe` (Binary (Leaf "10") "-" (Binary (Leaf "2") "*" (Leaf "5")))
+                `shouldBe` (Binary (LiteralLeaf "10") "-" (Binary (LiteralLeaf "2") "*" (LiteralLeaf "5")))
         it "construct parenthesized expressions preferentially." $
             tree (Right [(Parenthesized [(Token Literal "1"), (Token BinaryOperator "-"), (Token Literal "2")]), (Token BinaryOperator "*"), (Token Literal "8")])
-                `shouldBe` (Binary (Unary "()" (Binary (Leaf "1") "-" (Leaf "2"))) "*" (Leaf "8"))
+                `shouldBe` (Binary (Unary "()" (Binary (LiteralLeaf "1") "-" (LiteralLeaf "2"))) "*" (LiteralLeaf "8"))
 
 
 parse1plus1 :: BasicParser
